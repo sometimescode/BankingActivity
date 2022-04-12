@@ -3,20 +3,25 @@ import java.util.Scanner;
 public class BankingActivity {
 
     public static void main(String[] args) {
+        
         Scanner inputScanner = new Scanner(System.in);
 
-        int currentUserIndex = 0;
         int usersArraySize = 5;
+        int availableUsers = 0;
         String[] usersName = new String[usersArraySize];
         double[] usersFund = new double[usersArraySize];
         String[] usersCurrency = new String[usersArraySize];
         String[] availableCurrencies = {"PHP", "USD", "YEN"};
 
+        System.out.println("Welcome to Banking App");
         if(usersName[0] == null){
-            firstTimeInitialize(usersName, usersFund, usersCurrency, availableCurrencies, inputScanner);
+            System.out.println("No account detected.");
+            availableUsers = addUser(availableUsers, usersName, usersFund, usersCurrency, availableCurrencies, inputScanner);
         }
         
         int transactionNumber;
+        int foundUserIndex;
+
         do {
             transactionNumber = getTransactionNumber(inputScanner);
 
@@ -25,7 +30,13 @@ public class BankingActivity {
                     //working loop but commented for now
                     // int goBack = 1;
                     // do {
-                        displayInformation(usersName[currentUserIndex], usersFund[currentUserIndex], usersCurrency[currentUserIndex], inputScanner);
+                        foundUserIndex = startUserSelection(availableUsers, usersName, usersFund, inputScanner);
+                        if(foundUserIndex == -1) {
+                            System.out.println("User not found.");
+                        }
+                        else {
+                            displayInformation(usersName[foundUserIndex], usersFund[foundUserIndex], usersCurrency[foundUserIndex], inputScanner);
+                        }
                     //     System.out.println("[0] Go Back");
                     //     goBack = inputScanner.nextInt();
                     // } while (goBack != 0);
@@ -33,19 +44,69 @@ public class BankingActivity {
                     break;
                 }
                 case 2: {
-                    addFunds(currentUserIndex, usersFund, usersCurrency[currentUserIndex], inputScanner);
+                    foundUserIndex = startUserSelection(availableUsers, usersName, usersFund, inputScanner);
+                    if(foundUserIndex == -1) {
+                        System.out.println("User not found.");
+                    }
+                    else {
+                        addFunds(foundUserIndex, usersFund, usersCurrency[foundUserIndex], inputScanner);
+                    }
                     break;                    
                 }
                 case 3: {
-                    withdrawFunds(currentUserIndex, usersFund, usersCurrency[currentUserIndex], inputScanner);
+                    foundUserIndex = startUserSelection(availableUsers, usersName, usersFund, inputScanner);
+                    if(foundUserIndex == -1) {
+                        System.out.println("User not found.");
+                    }
+                    else {
+                        withdrawFunds(foundUserIndex, usersFund, usersCurrency[foundUserIndex], inputScanner);
+                    }
                     break;                    
                 }
                 case 4: {
-                    convertFunds(currentUserIndex, usersFund, usersCurrency, availableCurrencies, inputScanner);
+                    foundUserIndex = startUserSelection(availableUsers, usersName, usersFund, inputScanner);
+                    if(foundUserIndex == -1) {
+                        System.out.println("User not found.");
+                    }
+                    else {
+                        convertFunds(foundUserIndex, usersFund, usersCurrency, availableCurrencies, inputScanner);
+                    }
+                    break;
+                }
+                case 5: {
+                    availableUsers = addUser(availableUsers, usersName, usersFund, usersCurrency, availableCurrencies, inputScanner);
+                    break;
                 }        
             }
-
         } while (transactionNumber != 0);
+
+        inputScanner.close();
+    }
+
+    public static int startUserSelection(int availableUsers, String[] usersName, double[] usersFund, Scanner inputScanner){
+        System.out.println("<==========================>");
+        System.out.println("--Account List--");
+        System.out.println("(Display Format: User - Funds)");
+        for(int x = 0; x < availableUsers; x++)
+        {
+            System.out.println("> " + usersName[x] + " - " + usersFund[x]);
+        }
+        System.out.println("<==========================>");
+        System.out.println("Please enter user of account you want to use for this transaction: ");
+        
+        inputScanner.nextLine();
+        String user = inputScanner.nextLine();
+        
+        int foundUserIndex = -1;
+
+        for(int index = 0; index < availableUsers; index++)
+        {   
+            if(usersName[index].equals(user)) {
+                foundUserIndex = index;
+            }
+        }
+
+        return foundUserIndex;
     }
 
     public static double getCurrencyConversionRate(String fromCurrency, String toCurrency) {
@@ -117,11 +178,11 @@ public class BankingActivity {
         double withdrawAmount = inputScanner.nextDouble();
         
 
-        if(withdrawAmount < 500) {
-            System.out.println("Invalid amount. Only amounts worth 500 or more accepted.");
-        }
-        else if(withdrawAmount > usersFund[currentUserIndex]) {
+        if(withdrawAmount > usersFund[currentUserIndex]) {
             System.out.println("Invalid amount. Amount exceeds your current funds.");
+        }
+        else if(withdrawAmount < 500) {
+            System.out.println("Invalid amount. Only amounts worth 500 or more accepted.");
         }
         else {
             usersFund[currentUserIndex] -= withdrawAmount;
@@ -155,25 +216,34 @@ public class BankingActivity {
         System.out.println("[2] Add Funds");
         System.out.println("[3] Withdraw Funds");
         System.out.println("[4] Convert Funds");
+        System.out.println("[5] Add User");
         System.out.println("[0] Exit");
         System.out.println("<==========================>");
         System.out.println("Please enter the number of the transaction you want to do: ");
         return inputScanner.nextInt();
     }
 
-    public static void firstTimeInitialize(String[] usersName, double[] usersFund, String[] usersCurrency, String[] availableCurrencies, Scanner inputScanner){
-        
-        System.out.println("No account detected. " +
-        "To create one, please enter your name: ");
+    public static int addUser(int availableUsers, String[] usersName, double[] usersFund, String[] usersCurrency, String[] availableCurrencies, Scanner inputScanner){
         String name;
+        System.out.println("[Add User]");
+        System.out.println("Please enter your name: ");
+        
+        if (availableUsers > 0) {
+            inputScanner.nextLine();
+        }
+        
         name = inputScanner.nextLine();
 
-        usersName[0] = name;
+        usersName[availableUsers] = name;
 
         // commented for now, used to skip initiliazing when testing
         // usersName[0] = "John Doe";
 
-        usersFund[0] = 10000.00;
-        usersCurrency[0] = "PHP";
+        usersFund[availableUsers] = 10000.00;
+        usersCurrency[availableUsers] = "PHP";
+        
+        availableUsers++;
+
+        return availableUsers;
     }
 }
